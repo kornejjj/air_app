@@ -1,4 +1,4 @@
-// Imports required packages for Flutter, geolocation, HTTP requests, file storage, permissions, and icons
+// Imports required packages for Flutter, geolocation, HTTP requests, file storage, permissions, icons, and file sharing
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -8,6 +8,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:share_plus/share_plus.dart';
 
 // Entry point of the application
 void main() {
@@ -371,6 +372,31 @@ class _DataTablePageState extends State<DataTablePage> {
     });
   }
 
+  /// Shares the pollution data file for the selected date
+  Future<void> _downloadData() async {
+    if (_selectedDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No date selected')),
+      );
+      return;
+    }
+
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/AirPollutionData/pollution_$_selectedDate.txt');
+    if (!await file.exists()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No data file found for selected date')),
+      );
+      return;
+    }
+
+    // Share the file using share_plus
+    await Share.shareXFiles(
+      [XFile(file.path)],
+      text: 'Pollution data for $_selectedDate',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -398,22 +424,36 @@ class _DataTablePageState extends State<DataTablePage> {
                 return const Center(child: Text('No data available'));
               }
 
-              return DropdownButton<String>(
-                value: _selectedDate ?? dates.first,
-                onChanged: (String? newValue) {
-                  if (newValue != null) {
-                    setState(() {
-                      _selectedDate = newValue; // Update selected date
-                    });
-                    _loadFileData(newValue); // Load data for new date
-                  }
-                },
-                items: dates.map<DropdownMenuItem<String>>((String date) {
-                  return DropdownMenuItem<String>(
-                    value: date,
-                    child: Text(date),
-                  );
-                }).toList(),
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Column(
+                  children: [
+                    DropdownButton<String>(
+                      value: _selectedDate ?? dates.first,
+                      onChanged: (String? newValue) {
+                        if (newValue != null) {
+                          setState(() {
+                            _selectedDate = newValue; // Update selected date
+                          });
+                          _loadFileData(newValue); // Load data for new date
+                        }
+                      },
+                      items: dates.map<DropdownMenuItem<String>>((String date) {
+                        return DropdownMenuItem<String>(
+                          value: date,
+                          child: Text(date),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 10), // Spacer
+                    // Button to download data file
+                    ElevatedButton.icon(
+                      onPressed: _downloadData,
+                      icon: const FaIcon(FontAwesomeIcons.download, size: 20),
+                      label: const Text('Download Data'),
+                    ),
+                  ],
+                ),
               );
             },
           ),

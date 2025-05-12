@@ -1,0 +1,17 @@
+name: air_app
+description: A Flutter app to track air pollution exposure.
+version: 1.0.0
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  geolocator: ^12.0.0
+  http: ^1.1.0
+  path_provider: ^2.1.1
+  permission_handler: ^11.0.0
+  font_awesome_flutter: ^10.7.0
+
+flutter:
+  uses-material-design: true
